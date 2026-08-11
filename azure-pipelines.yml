@@ -22,28 +22,29 @@
 #     goals: 'package'
 
 trigger:
-- main
+  - main
 
 pool:
-  vmImage: 'macOS-latest'
+  vmImage: 'macOS-latest' # or 'ubuntu-latest' / 'windows-latest'
 
 steps:
+# 1. Install Java 25 (Temurin / OpenJDK)
+- task: JavaToolInstaller@0
+  displayName: 'Use Java 25'
+  inputs:
+    versionSpec: '25'
+    jdkArchitectureOption: 'x64'
+    jdkSourceOption: 'PreInstalled' # Downloads JDK 25 automatically if not locally pre-installed on runner
+    cleanDestination: true
 
-- script: |
-    echo ===== Java Version =====
-    java -version
-    echo ===== Maven Version =====
-    mvn -version
-  displayName: 'Check Java and Maven'
-
+# 2. Run Maven Task using the newly installed JDK 25
 - task: Maven@4
-  displayName: 'Run Selenium Maven Tests'
+  displayName: 'Run Maven Tests'
   inputs:
     mavenPomFile: 'pom.xml'
-    mavenOptions: '-Xmx3072m'
-    javaHomeOption: 'JDKVersion'
-    jdkVersionOption: 'default'
-    jdkArchitectureOption: 'x64'
+    goals: 'clean test'
+    options: '-Dmaven.compiler.release=25'
     publishJUnitResults: true
     testResultsFiles: '**/surefire-reports/TEST-*.xml'
-    goals: 'clean test'
+    javaHomeOption: 'JDKVersion'
+    jdkVersionOption: '1.25' # Forces Maven task to use JDK 25
