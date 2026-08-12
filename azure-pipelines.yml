@@ -29,30 +29,70 @@
 #     - main            # Target default branch
 #   always: true        # Forces pipeline run even if no code changes occurred
 
+# trigger:
+#   - main
+
+# pool:
+#   vmImage: 'macOS-latest' # or 'ubuntu-latest' / 'windows-latest'
+
+# steps:
+# # 1. Install Java 25 (Temurin / OpenJDK)
+# - task: JavaToolInstaller@0
+#   displayName: 'Use Java 25'
+#   inputs:
+#     versionSpec: '25'
+#     jdkArchitectureOption: 'x64'
+#     jdkSourceOption: 'PreInstalled' # Downloads JDK 25 automatically if not locally pre-installed on runner
+#     cleanDestination: true
+
+# # 2. Run Maven Task using the newly installed JDK 25
+# - task: Maven@4
+#   displayName: 'Run Maven Tests'
+#   inputs:
+#     mavenPomFile: 'pom.xml'
+#     goals: 'clean test'
+#     options: '-Dmaven.compiler.release=25'
+#     publishJUnitResults: true
+#     testResultsFiles: '**/surefire-reports/TEST-*.xml'
+#     javaHomeOption: 'JDKVersion'
+#     jdkVersionOption: '1.25' # Forces Maven task to use JDK 25
+
 trigger:
   - main
 
-pool:
-  vmImage: 'macOS-latest' # or 'ubuntu-latest' / 'windows-latest'
+jobs:
+- job: Parallel_OS_Execution
+  displayName: 'Run Tests in Parallel Across OS'
+  strategy:
+    maxParallel: 3
+    matrix:
+      Linux_Ubuntu:
+        imageName: 'ubuntu-latest'
+      macOS:
+        imageName: 'macOS-latest'
+      Windows:
+        imageName: 'windows-latest'
 
-steps:
-# 1. Install Java 25 (Temurin / OpenJDK)
-- task: JavaToolInstaller@0
-  displayName: 'Use Java 25'
-  inputs:
-    versionSpec: '25'
-    jdkArchitectureOption: 'x64'
-    jdkSourceOption: 'PreInstalled' # Downloads JDK 25 automatically if not locally pre-installed on runner
-    cleanDestination: true
+  pool:
+    vmImage: $(imageName)
 
-# 2. Run Maven Task using the newly installed JDK 25
-- task: Maven@4
-  displayName: 'Run Maven Tests'
-  inputs:
-    mavenPomFile: 'pom.xml'
-    goals: 'clean test'
-    options: '-Dmaven.compiler.release=25'
-    publishJUnitResults: true
-    testResultsFiles: '**/surefire-reports/TEST-*.xml'
-    javaHomeOption: 'JDKVersion'
-    jdkVersionOption: '1.25' # Forces Maven task to use JDK 25
+  steps:
+  # 1. Install JDK 25
+  - task: JavaToolInstaller@0
+    displayName: 'Install & Set JDK 25'
+    inputs:
+      versionSpec: '25'
+      jdkArchitectureOption: 'x64'
+      jdkSourceOption: 'PreInstalled'
+
+  # 2. Run Maven Tests using installed JDK 25
+  - task: Maven@4
+    displayName: 'Execute Maven Tests on $(imageName)'
+    inputs:
+      mavenPomFile: 'pom.xml'
+      goals: 'clean test'
+      options: '-e'
+      publishJUnitResults: true
+      testResultsFiles: '**/surefire-reports/TEST-*.xml'
+      javaHomeOption: 'Path'
+      jdkDirectory: '$(JAVA_HOME)'
