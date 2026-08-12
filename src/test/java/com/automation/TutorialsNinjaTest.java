@@ -21,7 +21,7 @@ private Playwright playwright;
     public void setUp() {
         playwright = Playwright.create();
         // Headless mode enabled for standard CI execution
-        browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(false));
+        browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
         BrowserContext context = browser.newContext();
         page = context.newPage();
     }
