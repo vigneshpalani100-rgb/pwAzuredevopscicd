@@ -21,6 +21,14 @@
 #     testResultsFiles: '**/surefire-reports/TEST-*.xml'
 #     goals: 'package'
 
+schedules:
+- cron: "3 6 * * *"   # Runs daily at 06:03 AM UTC (11:33 AM IST)
+  displayName: Daily Scheduled Automation Suite (11:33 AM IST)
+  branches:
+    include:
+    - main            # Target default branch
+  always: true        # Forces pipeline run even if no code changes occurred
+  
 trigger:
   - main
 
