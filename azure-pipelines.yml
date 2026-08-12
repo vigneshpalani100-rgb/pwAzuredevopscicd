@@ -85,7 +85,13 @@ jobs:
       jdkArchitectureOption: 'x64'
       jdkSourceOption: 'PreInstalled'
 
-  # 2. Run Maven Tests using installed JDK 25
+#2. Install Playwright browser binaries and system dependencies on Linux agents
+  - script: |
+      mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install-deps"
+    displayName: 'Install Playwright System Dependencies (Ubuntu)'
+    condition: eq(variables['agent.os'], 'Linux')
+    
+  # 3. Run Maven Tests using installed JDK 25
   - task: Maven@4
     displayName: 'Execute Maven Tests on $(imageName)'
     inputs:
